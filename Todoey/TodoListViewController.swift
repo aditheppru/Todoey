@@ -10,11 +10,20 @@ import UIKit
 
 class TodoListViewController: UITableViewController {
 
-    var itemArray = ["aaa", "bbb", "ccc"]
+    let keyTodoListArray = "TodoListArray"
+    
+    var itemArray: [String] = []
+    
+    let defaults = UserDefaults.standard
     
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view, typically from a nib.
+        
+        // Check null before setting an array to a class variable
+        if let items = defaults.array(forKey: keyTodoListArray) as? [String] {
+            itemArray = items
+        }
     }
 
     
@@ -59,6 +68,8 @@ class TodoListViewController: UITableViewController {
             if (textField.text != nil && textField.text != "") {
                 // Add a new item into the item array.
                 self.itemArray.append(textField.text!)
+                
+                self.defaults.set(self.itemArray, forKey: self.keyTodoListArray)
                 
                 // Refresh the table view.
                 self.tableView.reloadData()
