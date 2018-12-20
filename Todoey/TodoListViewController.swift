@@ -10,7 +10,7 @@ import UIKit
 
 class TodoListViewController: UITableViewController {
 
-    let itemArray = ["aaa", "bbb", "ccc"]
+    var itemArray = ["aaa", "bbb", "ccc"]
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -32,19 +32,52 @@ class TodoListViewController: UITableViewController {
     //MARK - TableView Delegate Methods
     // When a cell has been selected.
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        //print(itemArray[indexPath.row])
-
         // Display or remove a checkmark sign.
         if (tableView.cellForRow(at: indexPath)?.accessoryType == .checkmark) {
+            // Clear a checkmark
             tableView.cellForRow(at: indexPath)?.accessoryType = .none
         } else {
+            // Display a checkmark.
             tableView.cellForRow(at: indexPath)?.accessoryType = .checkmark
         }
         
         // Remove a highlighted color from the selected row.
         tableView.deselectRow(at: indexPath, animated: true)
-        
     }
     
+    //MARK - Add New Items
+    @IBAction func addButton_Pressed(_ sender: UIBarButtonItem) {
+        // It can be accessible in this function.
+        var textField = UITextField()
+        
+        // Setup an alert box.
+        let alert = UIAlertController(title: "Add New Todoey Item", message: "", preferredStyle: .alert)
+        
+        // Set up an "Add Item" button.
+        let action = UIAlertAction(title: "Add Item", style: .default) { (action) in
+            // Get access to the text field.
+            if (textField.text != nil && textField.text != "") {
+                // Add a new item into the item array.
+                self.itemArray.append(textField.text!)
+                
+                // Refresh the table view.
+                self.tableView.reloadData()
+            }
+        }
+        
+        // Add a text field control into the alert box.
+        alert.addTextField { (alertTextField) in
+            alertTextField.placeholder = "Create new item"
+            
+            // Set a local text field so that it can be accessible after an "Add Item" button has been clicked.
+            textField = alertTextField
+        }
+        
+        // An "Add Item" button into the alert box.
+        alert.addAction(action)
+        
+        // Show the alert box.
+        present(alert, animated: true, completion: nil)
+    }
 }
 
