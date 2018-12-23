@@ -7,13 +7,18 @@
 //
 
 import UIKit
-import CoreData
+//import CoreData
+import RealmSwift
 
 class CategoryViewController: UITableViewController {
 
-    var categories = [Category]()
+    let realm = try! Realm()
     
-    let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
+    var categories: Results<Category>?
+    
+//    var categories = [Category]()
+    
+//    let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -24,11 +29,12 @@ class CategoryViewController: UITableViewController {
     // MARK: - Table view data source
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         // #warning Incomplete implementation, return the number of rows
-        return categories.count
+        return categories?.count ?? 1
+//        return categories.count
     }
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "CategoryCell", for: indexPath)
-        cell.textLabel?.text = categories[indexPath.row].name
+        cell.textLabel?.text = categories?[indexPath.row].name ?? ""
         
         return cell;
     }
@@ -49,7 +55,7 @@ class CategoryViewController: UITableViewController {
             
             // To be safe, just check if a table view's cell is selected.
             if let indexPath = tableView.indexPathForSelectedRow {
-                destinationVC.selectedCategory = categories[indexPath.row]
+                destinationVC.selectedCategory = categories?[indexPath.row]
             }
         }
     }
@@ -66,12 +72,13 @@ class CategoryViewController: UITableViewController {
             // Get access to the text field.
             if (textField.text != nil && textField.text != "") {
                 // Add a new item into the item array.
-                let item = Category(context: self.context)
-                item.name = textField.text!
-                self.categories.append(item)
+//                let item = Category(context: self.context)
+                let category = Category()
+                category.name = textField.text!
+//                self.categories.append(category)
                 
                 // Save data to a persistent storage.
-                self.saveCategories()
+                self.saveCategories(category: category)
                 
                 // Refresh the table view.
                 self.tableView.reloadData()
@@ -101,43 +108,57 @@ class CategoryViewController: UITableViewController {
     
     // MARK: - Data Storage
     // Save the categories to a persistent storage.
-    func saveCategories() {
+    func saveCategories(category: Category) {
         do {
-            try context.save()
+//            try context.save()
+            try realm.write {
+                realm.add(category)
+            }
         } catch {
             print("Error saving categories to context, \(error)")
         }
     }
     // Load the categories from a persistent storage.
-    func loadCategories(with request: NSFetchRequest<Category> = Category.fetchRequest()) {
-        do {
-            categories = try context.fetch(request)
-        } catch {
-            print("Error fetching categories from context, \(error)")
-        }
+    func loadCategories() {
+        categories = realm.objects(Category.self)
     }
+//    func loadCategories(with request: NSFetchRequest<Category> = Category.fetchRequest()) {
+//        do {
+//            categories = try context.fetch(request)
+//        } catch {
+//            print("Error fetching categories from context, \(error)")
+//        }
+//    }
 }
 
 // MARK: - Search Bar
 extension CategoryViewController: UISearchBarDelegate {
     func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
         let searchText = (searchBar.text ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
-        let request : NSFetchRequest<Category> = Category.fetchRequest()
         if searchText != "" {
-            request.predicate = NSPredicate(format: "name CONTAINS[cd] %@", searchText)
+            categories = categories?.filter("name CONTAINS[cd] %@", searchText).sorted(byKeyPath: "name", ascending: true)
         }
-        request.sortDescriptors = [NSSortDescriptor(key: "name", ascending: true)]
         
-        loadCategories(with: request)
         tableView.reloadData()
     }
-    
+//    func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
+//        let searchText = (searchBar.text ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+//        let request : NSFetchRequest<Category> = Category.fetchRequest()
+//        if searchText != "" {
+//            request.predicate = NSPredicate(format: "name CONTAINS[cd] %@", searchText)
+//        }
+//        request.sortDescriptors = [NSSortDescriptor(key: "name", ascending: true)]
+//
+//        loadCategories(with: request)
+//        tableView.reloadData()
+//    }
+
     func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
         if (searchBar.text ?? "").trimmingCharacters(in: .whitespacesAndNewlines).count == 0 {
             // Reload all data.
             loadCategories()
             tableView.reloadData()
-            
+
             // Hide keyboard.
             DispatchQueue.main.async {
                 searchBar.resignFirstResponder()
