@@ -9,8 +9,10 @@
 import UIKit
 //import CoreData
 import RealmSwift
+//import SwipeCellKit
+import ChameleonFramework
 
-class CategoryViewController: UITableViewController {
+class CategoryViewController: SwipeTableViewController {
 
     let realm = try! Realm()
     
@@ -22,6 +24,8 @@ class CategoryViewController: UITableViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+
+        tableView.separatorStyle = .none
         
         loadCategories()
     }
@@ -33,11 +37,17 @@ class CategoryViewController: UITableViewController {
 //        return categories.count
     }
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "CategoryCell", for: indexPath)
+//        let cell = tableView.dequeueReusableCell(withIdentifier: "CategoryCell", for: indexPath) as! SwipeTableViewCell
+        let cell = super.tableView(tableView, cellForRowAt: indexPath)
         cell.textLabel?.text = categories?[indexPath.row].name ?? ""
+//        cell.delegate = self
+        cell.backgroundColor = UIColor(hexString: categories?[indexPath.row].color ?? "fffff")
+        cell.textLabel?.textColor = ContrastColorOf(cell.backgroundColor!, returnFlat: true)
         
         return cell;
     }
+    
+    
     
     // MARK: - TableView Delegate Methods
     // When a cell has been selected.
@@ -75,6 +85,7 @@ class CategoryViewController: UITableViewController {
 //                let item = Category(context: self.context)
                 let category = Category()
                 category.name = textField.text!
+                category.color = UIColor.randomFlat.hexValue()
 //                self.categories.append(category)
                 
                 // Save data to a persistent storage.
@@ -129,6 +140,25 @@ class CategoryViewController: UITableViewController {
 //            print("Error fetching categories from context, \(error)")
 //        }
 //    }
+    
+    
+    // MARK: - Delete Data From Swipe
+    override func updateModel(at indexPath: IndexPath) {
+        super.updateModel(at: indexPath)
+        
+        if let category = categories?[indexPath.row] {
+            do {
+                try realm.write {
+                    realm.delete(category)
+                }
+
+                // Update all rows displayed in the table view.
+                //                    tableView.reloadData()
+            } catch {
+                print("Error deleting a category, \(error)")
+            }
+        }
+    }
 }
 
 // MARK: - Search Bar
